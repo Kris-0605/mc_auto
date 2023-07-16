@@ -1,2 +1,4 @@
+ssh_key.pub
 config.json
-*.7z
+out.7z
+mods/*

@@ -86,7 +86,7 @@ def upload(droplet, connect, execute_and_wait, WORLD_FILE_DIRECTORY):
     print("[Process 2] Setting server properties...")
     with sftp.open("server.properties", "w") as f:
         # Adjust to your liking
-        f.write('#Minecraft server properties\n#Sat Jul 15 01:40:56 UTC 2023\nenable-jmx-monitoring=false\nrcon.port=25575\nlevel-seed=\ngamemode=survival\nenable-command-block=false\nenable-query=false\ngenerator-settings={}\nenforce-secure-profile=true\nlevel-name=world\nmotd=A Minecraft Server\nquery.port=25565\npvp=true\ngenerate-structures=true\nmax-chained-neighbor-updates=1000000\ndifficulty=hard\nnetwork-compression-threshold=256\nmax-tick-time=60000\nrequire-resource-pack=false\nuse-native-transport=true\nmax-players=20\nonline-mode=true\nenable-status=true\nallow-flight=false\ninitial-disabled-packs=\nbroadcast-rcon-to-ops=true\nview-distance=16\nserver-ip=\nresource-pack-prompt=\nallow-nether=true\nserver-port=25565\nenable-rcon=false\nsync-chunk-writes=true\nop-permission-level=4\nprevent-proxy-connections=false\nhide-online-players=false\nresource-pack=\nentity-broadcast-range-percentage=500\nsimulation-distance=10\nrcon.password=\nplayer-idle-timeout=0\nforce-gamemode=false\nrate-limit=0\nhardcore=true\nwhite-list=true\nbroadcast-console-to-ops=true\nspawn-npcs=true\nspawn-animals=true\nfunction-permission-level=2\ninitial-enabled-packs=vanilla,fabric\nlevel-type=minecraft\\:normal\ntext-filtering-config=\nspawn-monsters=true\nenforce-whitelist=true\nspawn-protection=16\nresource-pack-sha1=\nmax-world-size=29999984')
+        f.write('#Minecraft server properties\n#Sat Jul 15 01:40:56 UTC 2023\nenable-jmx-monitoring=false\nrcon.port=25575\nlevel-seed=\ngamemode=survival\nenable-command-block=false\nenable-query=false\ngenerator-settings={}\nenforce-secure-profile=true\nlevel-name=world\nmotd=A Minecraft Server\nquery.port=25565\npvp=true\ngenerate-structures=true\nmax-chained-neighbor-updates=1000000\ndifficulty=hard\nnetwork-compression-threshold=256\nmax-tick-time=60000\nrequire-resource-pack=false\nuse-native-transport=true\nmax-players=20\nonline-mode=true\nenable-status=true\nallow-flight=false\ninitial-disabled-packs=\nbroadcast-rcon-to-ops=true\nview-distance=16\nserver-ip=\nresource-pack-prompt=\nallow-nether=true\nserver-port=25565\nenable-rcon=false\nsync-chunk-writes=true\nop-permission-level=4\nprevent-proxy-connections=false\nhide-online-players=false\nresource-pack=\nentity-broadcast-range-percentage=500\nsimulation-distance=10\nrcon.password=\nplayer-idle-timeout=0\nforce-gamemode=false\nrate-limit=0\nhardcore=false\nwhite-list=true\nbroadcast-console-to-ops=true\nspawn-npcs=true\nspawn-animals=true\nfunction-permission-level=2\ninitial-enabled-packs=vanilla,fabric\nlevel-type=minecraft\\:normal\ntext-filtering-config=\nspawn-monsters=true\nenforce-whitelist=true\nspawn-protection=16\nresource-pack-sha1=\nmax-world-size=29999984')
     sftp.close()
     print("[Process 2] Terminating...")
     ssh.close()
@@ -157,7 +157,9 @@ def download():
     execute_and_wait(ssh_global, "7z a -mx9 out.7z world")
     print("Downloading backup...")
     sftp = ssh_global.open_sftp()
-    sftp.get("out.7z", "out.7z")
+    size = sftp.stat("out.7z").st_size
+    with tqdm(total=size, unit="B", unit_scale=True) as pbar:
+        sftp.get("out.7z", "out.7z", callback=lambda bytes_transferred, total_bytes: pbar.update(bytes_transferred - pbar.n))
     sftp.close()
 
 def destroy():

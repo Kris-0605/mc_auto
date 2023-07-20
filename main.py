@@ -153,6 +153,9 @@ def download():
     mc_stdin.flush()
     print("Waiting for server to stop...")
     mc_stdout.channel.recv_exit_status()
+    __download()
+
+def __download():
     print("Compressing backup...")
     execute_and_wait(ssh_global, "7z a -mx9 out.7z world")
     print("Downloading backup...")
@@ -161,6 +164,21 @@ def download():
     with tqdm(total=size, unit="B", unit_scale=True) as pbar:
         sftp.get("out.7z", "out.7z", callback=lambda bytes_transferred, total_bytes: pbar.update(bytes_transferred - pbar.n))
     sftp.close()
+
+def download_id():
+    global droplet, ssh_global
+    id = input(" Droplet ID >>> ")
+    print("Getting droplet...")
+    droplet = get_droplet(id)
+    print("Connecting via SSH...")
+    ssh_global = paramiko.SSHClient()
+    ssh_global.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_global.connect(droplet["droplet"]["networks"]["v4"][0]["ip_address"], username="root", key_filename="ssh_key.pub")
+    print("Attempting to find running server and stop it...")
+    stdin, stdout, stderr = ssh_global.exec_command("ps aux | grep fabric-server-launch.jar")
+    pid = stdout.read().decode("utf-8")[11:16]
+    execute_and_wait(ssh_global, f"kill -SIGINT {pid}")
+    __download()
 
 def destroy():
     print("Closing SSH session...")
@@ -184,6 +202,7 @@ Commands:
           create - Creates the droplet, uploads the world specified, starts the Minecraft server and returns the public IP address.
           recover - Asks for a droplet ID, rebuilds the droplet and then does the same as create.
           download - Stops the server and creates a 7-zip backup of the world directory, downloading it to "out.7z". If you don't do this it will be lost!
+          download_id - Tries to stop the server on a given droplet ID and runs download.
           destroy - Destroys the droplet. This will delete the world if you didn't download it! If you do not delete, you will be charged for usage until you do!
           exit - Exits the program.
 

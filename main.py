@@ -183,10 +183,19 @@ def download_id():
 def destroy():
     print("Closing SSH session...")
     ssh_global.close()
+    __destroy()
+
+def __destroy():
     print("Destroying droplet...")
     http_status_code = requests.delete(f"https://api.digitalocean.com/v2/droplets/{droplet['droplet']['id']}", headers=DIGITAL_OCEAN_AUTH_TOKEN).status_code
     print("Success") if http_status_code == 204 else print(f"Failed with HTTP status code {http_status_code}")
 
+def destroy_id():
+    global droplet, ssh_global
+    id = input(" Droplet ID >>> ")
+    print("Getting droplet...")
+    droplet = get_droplet(id)
+    __destroy()
 
 if __name__ == "__main__":
     print('''
@@ -204,6 +213,7 @@ Commands:
           download - Stops the server and creates a 7-zip backup of the world directory, downloading it to "out.7z". If you don't do this it will be lost!
           download_id - Tries to stop the server on a given droplet ID and runs download.
           destroy - Destroys the droplet. This will delete the world if you didn't download it! If you do not delete, you will be charged for usage until you do!
+          destroy_id - Destroy a droplet from an ID.
           exit - Exits the program.
 
 ''')
@@ -217,8 +227,12 @@ Commands:
                     recover()
                 case "download":
                     download()
+                case "download_id":
+                    download_id()
                 case "destroy":
                     destroy()
+                case "destroy_id":
+                    destroy_id()
                 case "exit":
                     if ssh_global:
                         ssh_global.close()
